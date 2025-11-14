@@ -174,95 +174,104 @@
       pointer-events: none;
     }
 
-    .result-panel {
-      margin-top: 18px;
-      padding: 12px 10px 10px;
-      border-radius: 16px;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    /* 결과 오버레이 */
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: radial-gradient(circle at top, rgba(10, 12, 26, 0.98), rgba(5, 6, 12, 0.98));
       display: none;
-      animation: fadeInUp 0.4s ease forwards;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 16px 16px;
     }
 
-    .result-panel.visible {
+    .result-overlay.visible {
       display: flex;
+      animation: fadeInUp 0.35s ease forwards;
     }
 
-    .result-character {
-      width: 72px;
-      min-width: 72px;
-      height: 72px;
-      border-radius: 18px;
+    .overlay-title {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 6px;
+    }
+
+    .overlay-main {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .overlay-character {
+      width: 140px;
+      height: 140px;
+      border-radius: 24px;
       background: linear-gradient(135deg, #ff7bc2, #7f7bff);
       overflow: hidden;
-      margin-right: 12px;
       position: relative;
+      margin-bottom: 10px;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 11px;
+      font-size: 12px;
       text-align: center;
-      padding: 4px;
+      padding: 6px;
     }
 
-    .result-character img {
+    .overlay-character img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
-    .char-name-tag {
+    .overlay-char-name {
       position: absolute;
-      bottom: 4px;
+      bottom: 6px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 10px;
-      padding: 2px 6px;
+      font-size: 11px;
+      padding: 3px 8px;
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.7);
       white-space: nowrap;
     }
 
-    .result-text-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+    .overlay-line {
+      font-size: 13px;
+      text-align: center;
+      opacity: 0.9;
+      line-height: 1.5;
+      margin-bottom: 16px;
     }
 
-    .result-main-line {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 4px;
+    .overlay-category {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-bottom: 14px;
     }
 
-    .result-sub-line {
-      font-size: 12px;
-      opacity: 0.8;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-
-    .retry-button {
-      align-self: flex-start;
+    .overlay-retry-button {
       border: none;
       outline: none;
       border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 12px;
+      padding: 8px 18px;
+      font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.04em;
-      background: rgba(255, 204, 92, 0.08);
+      background: rgba(255, 204, 92, 0.16);
       color: #ffd86b;
-      border: 1px solid rgba(255, 216, 107, 0.4);
+      border: 1px solid rgba(255, 216, 107, 0.6);
       cursor: pointer;
       transition: background 0.15s ease, transform 0.1s ease;
     }
 
-    .retry-button:active {
+    .overlay-retry-button:active {
       transform: translateY(1px);
-      background: rgba(255, 204, 92, 0.18);
+      background: rgba(255, 204, 92, 0.26);
     }
 
     @keyframes fadeInUp {
@@ -287,6 +296,13 @@
       .spin-button {
         font-size: 14px;
         padding: 10px 20px;
+      }
+      .overlay-main {
+        font-size: 16px;
+      }
+      .overlay-character {
+        width: 120px;
+        height: 120px;
       }
     }
   </style>
@@ -319,24 +335,28 @@
         </div>
       </div>
 
-      <div class="result-panel" id="resultPanel">
-        <div class="result-character" id="characterBox">
+      <!-- 결과 오버레이 -->
+      <div class="result-overlay" id="resultOverlay">
+        <div class="overlay-title">오늘의 점심 결과</div>
+        <div class="overlay-main" id="overlayMain"></div>
+
+        <div class="overlay-character" id="overlayCharacterBox">
           <span>캐릭터 프리뷰</span>
-          <div class="char-name-tag" id="charNameTag">???</div>
+          <div class="overlay-char-name" id="overlayCharName">???</div>
         </div>
-        <div class="result-text-area">
-          <div>
-            <div class="result-main-line" id="resultMain"></div>
-            <div class="result-sub-line" id="resultSub"></div>
-          </div>
-          <button class="retry-button" id="retryButton">메뉴 다시 추천</button>
-        </div>
+
+        <div class="overlay-line" id="overlayLine"></div>
+        <div class="overlay-category" id="overlayCategory"></div>
+
+        <button class="overlay-retry-button" id="overlayRetryButton">
+          메뉴 다시 추천
+        </button>
       </div>
     </div>
   </div>
 
   <script>
-    // 1. 데이터 정의 (캐릭터/문구 반영)
+    // 1. 데이터 정의
     const CATEGORY_DATA = [
       {
         id: 0,
@@ -454,13 +474,15 @@
 
     const wheelEl = document.getElementById("wheel");
     const spinButton = document.getElementById("spinButton");
-    const retryButton = document.getElementById("retryButton");
     const dimLayer = document.getElementById("dimLayer");
-    const resultPanel = document.getElementById("resultPanel");
-    const resultMain = document.getElementById("resultMain");
-    const resultSub = document.getElementById("resultSub");
-    const charNameTag = document.getElementById("charNameTag");
-    const characterBox = document.getElementById("characterBox");
+
+    const resultOverlay = document.getElementById("resultOverlay");
+    const overlayMain = document.getElementById("overlayMain");
+    const overlayLine = document.getElementById("overlayLine");
+    const overlayCategory = document.getElementById("overlayCategory");
+    const overlayCharName = document.getElementById("overlayCharName");
+    const overlayCharacterBox = document.getElementById("overlayCharacterBox");
+    const overlayRetryButton = document.getElementById("overlayRetryButton");
 
     let isSpinning = false;
     const sliceDeg = 360 / CATEGORY_DATA.length; // 45도
@@ -488,21 +510,22 @@
       return { category, menu };
     }
 
-    // 4. 결과 UI
-    function updateResultUI(category, menu) {
-      resultMain.textContent = `오늘 점심은 "${menu}" 어때?`;
-      resultSub.textContent = `${category.character.line} (${category.label} 카테고리 추천)`;
-      charNameTag.textContent = category.character.name || "???";
+    // 4. 결과 오버레이 UI
+    function showResultOverlay(category, menu) {
+      overlayMain.textContent = `오늘 점심은 "${menu}" 어때?`;
+      overlayLine.textContent = category.character.line;
+      overlayCategory.textContent = `카테고리: ${category.label}`;
+      overlayCharName.textContent = category.character.name || "???";
 
-      const oldImg = characterBox.querySelector("img");
-      const placeholderText = characterBox.querySelector("span");
+      const oldImg = overlayCharacterBox.querySelector("img");
+      const placeholderText = overlayCharacterBox.querySelector("span");
 
       if (category.character.image) {
         if (!oldImg) {
           const img = document.createElement("img");
           img.src = category.character.image;
           img.alt = category.character.name || "캐릭터";
-          characterBox.insertBefore(img, placeholderText);
+          overlayCharacterBox.insertBefore(img, placeholderText);
         } else {
           oldImg.src = category.character.image;
           oldImg.alt = category.character.name || "캐릭터";
@@ -518,7 +541,11 @@
         }
       }
 
-      resultPanel.classList.add("visible");
+      resultOverlay.classList.add("visible");
+    }
+
+    function hideResultOverlay() {
+      resultOverlay.classList.remove("visible");
     }
 
     // 5. 회전 로직
@@ -526,8 +553,9 @@
       if (isSpinning) return;
       isSpinning = true;
       spinButton.classList.add("disabled");
-      resultPanel.classList.remove("visible");
+      hideResultOverlay();
 
+      // 첫 실행 시 딤드 제거
       dimLayer.classList.add("off");
 
       const { category, menu } = pickRandomCategoryAndMenu();
@@ -541,7 +569,7 @@
       wheelEl.style.transform = `rotate(${finalRotation}deg)`;
 
       setTimeout(() => {
-        updateResultUI(category, menu);
+        showResultOverlay(category, menu);
         isSpinning = false;
         spinButton.classList.remove("disabled");
       }, 3100);
@@ -549,7 +577,11 @@
 
     // 6. 이벤트
     spinButton.addEventListener("click", spin);
-    retryButton.addEventListener("click", spin);
+    overlayRetryButton.addEventListener("click", () => {
+      hideResultOverlay();
+      spin();
+    });
   </script>
 </body>
 </html>
+
