@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>점심 추천 슬롯</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b0c10;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .card {
+      background: radial-gradient(circle at top, #2b2f4a 0%, #111322 60%, #05060a 100%);
+      border-radius: 24px;
+      padding: 20px 16px 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .title-main {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .title-sub {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    .dim-layer {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.9));
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      z-index: 1;
+    }
+    .dim-layer.off {
+      opacity: 0;
+    }
+
+    .slot-area {
+      position: relative;
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .wheel-wrapper {
+      position: relative;
+      width: 260px;
+      height: 260px;
+    }
+
+    .wheel-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #4a5cd8, #222248 40%, #101020 100%);
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.7);
+    }
+
+    .wheel {
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      overflow: visible;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 3s cubic-bezier(0.21, 0.95, 0.45, 1);
+    }
+
+    .slice-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform-origin: 0 0;
+      width: 50%;
+      font-size: 11px;
+      text-align: center;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+      opacity: 0.9;
+    }
+
+    .slice-label span {
+      display: inline-block;
+      transform: translateY(-110%);
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-bottom: 18px solid #ffd86b;
+      filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.8));
+      z-index: 3;
+    }
+
+    .center-button-wrap {
+      position: absolute;
+      inset: 96px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .spin-button {
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #ffcc5c, #ff8c42);
+      color: #141414;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.8);
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s ease;
+    }
+
+    .spin-button:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .spin-button.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .result-panel {
+      margin-top: 18px;
+      padding: 12px 10px 10px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: none;
+      animation: fadeInUp 0.4s ease forwards;
+    }
+
+    .result-panel.visible {
+      display: flex;
+    }
+
+    .result-character {
+      width: 72px;
+      min-width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #ff7bc2, #7f7bff);
+      overflow: hidden;
+      margin-right: 12px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 11px;
+      text-align: center;
+      padding: 4px;
+    }
+
+    .result-character img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .char-name-tag {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.7);
+      white-space: nowrap;
+    }
+
+    .result-text-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .result-main-line {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .result-sub-line {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .retry-button {
+      align-self: flex-start;
+      border: none;
+      outline: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      background: rgba(255, 204, 92, 0.08);
+      color: #ffd86b;
+      border: 1px solid rgba(255, 216, 107, 0.4);
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .retry-button:active {
+      transform: translateY(1px);
+      background: rgba(255, 204, 92, 0.18);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 360px) {
+      .wheel-wrapper {
+        width: 220px;
+        height: 220px;
+      }
+      .center-button-wrap {
+        inset: 82px;
+      }
+      .spin-button {
+        font-size: 14px;
+        padding: 10px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="dim-layer" id="dimLayer"></div>
+
+      <div class="title">
+        <div class="title-main">LUNCH SLOT</div>
+        <div class="title-sub">오늘 점심은 서브컬처 캐릭터에게 맡겨보자</div>
+      </div>
+
+      <div class="slot-area">
+        <div class="wheel-wrapper">
+          <div class="wheel-bg"></div>
+
+          <div class="wheel" id="wheel">
+            <!-- 라벨은 JS에서 동적으로 주입 -->
+          </div>
+
+          <div class="pointer"></div>
+
+          <div class="center-button-wrap">
+            <button class="spin-button" id="spinButton">
+              점심 추천
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-panel" id="resultPanel">
+        <div class="result-character" id="characterBox">
+          <!-- 캐릭터 이미지는 있으면 img로, 없으면 배경 + 이름 -->
+          <!-- 기본 플레이스홀더 -->
+          <span>캐릭터 프리뷰</span>
+          <div class="char-name-tag" id="charNameTag">???</div>
+        </div>
+        <div class="result-text-area">
+          <div>
+            <div class="result-main-line" id="resultMain"></div>
+            <div class="result-sub-line" id="resultSub"></div>
+          </div>
+          <button class="retry-button" id="retryButton">메뉴 다시 추천</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. 데이터 정의
+    const CATEGORY_DATA = [
+      {
+        id: 0,
+        key: "riceThief",
+        label: "밥도둑",
+        character: {
+          name: "캐릭터A",
+          image: "img/riceThief_char.png", // 이미지 없으면 나중에 추가
+          line: "밥 한 그릇 그냥 사라진다!"
+        },
+        menus: [
+          "찜닭", "아구찜", "오므라이스", "제육",
+          "덮밥", "카레라이스", "생선정식", "게장"
+        ]
+      },
+      {
+        id: 1,
+        key: "noodle",
+        label: "면류",
+        character: {
+          name: "캐릭터B",
+          image: "img/noodle_char.png",
+          line: "후루룩 면치기 한 번 갈까?"
+        },
+        menus: [
+          "비빔국수", "스파게티", "잔치국수", "뇨끼",
+          "칼국수", "수제비", "쌀국수", "막국수"
+        ]
+      },
+      {
+        id: 2,
+        key: "japanese",
+        label: "일식",
+        character: {
+          name: "캐릭터C",
+          image: "img/japanese_char.png",
+          line: "오늘은 깔끔하게 일식으로 정리해보자."
+        },
+        menus: [
+          "초밥", "가츠동", "라멘", "소바",
+          "돈부리", "규동", "오코노미야끼", "연어덮밥"
+        ]
+      },
+      {
+        id: 3,
+        key: "soup",
+        label: "국/찌개",
+        character: {
+          name: "캐릭터D",
+          image: "img/soup_char.png",
+          line: "국물 한 숟가락에 피로가 내려간다."
+        },
+        menus: [
+          "김치찌개", "육개장", "뼈해장국", "부대찌개",
+          "된장찌개", "돼지국밥", "갈치조림", "순두부찌개"
+        ]
+      },
+      {
+        id: 4,
+        key: "chinese",
+        label: "중식",
+        character: {
+          name: "캐릭터E",
+          image: "img/chinese_char.png",
+          line: "기름지고 강렬한 맛, 딱 중식이다."
+        },
+        menus: [
+          "마라탕", "짜장면", "짬뽕", "탕수육",
+          "깐풍새우", "새우볶음밥", "마파두부", "꿔바로우"
+        ]
+      },
+      {
+        id: 5,
+        key: "lazy",
+        label: "귀찮음",
+        character: {
+          name: "캐릭터F",
+          image: "img/lazy_char.png",
+          line: "오늘은 대충 먹는 것도 전략이야."
+        },
+        menus: [
+          "토스트", "볶음밥", "샌드위치", "도시락",
+          "타코", "컵라면", "삼각김밥", "햄버거"
+        ]
+      },
+      {
+        id: 6,
+        key: "heavy",
+        label: "헤비",
+        character: {
+          name: "캐릭터G",
+          image: "img/heavy_char.png",
+          line: "기름칠 제대로 하고 힘내보자!"
+        },
+        menus: [
+          "치킨", "족발", "보쌈", "피자",
+          "곱창", "삼겹살", "스테이크", "닭발"
+        ]
+      },
+      {
+        id: 7,
+        key: "snack",
+        label: "분식",
+        character: {
+          name: "캐릭터H",
+          image: "img/snack_char.png",
+          line: "소울푸드는 역시 분식이지."
+        },
+        menus: [
+          "떡볶이", "어묵", "순대", "김밥",
+          "돈까스", "라면", "핫도그", "튀김"
+        ]
+      }
+    ];
+
+    const wheelEl = document.getElementById("wheel");
+    const spinButton = document.getElementById("spinButton");
+    const retryButton = document.getElementById("retryButton");
+    const dimLayer = document.getElementById("dimLayer");
+    const resultPanel = document.getElementById("resultPanel");
+    const resultMain = document.getElementById("resultMain");
+    const resultSub = document.getElementById("resultSub");
+    const charNameTag = document.getElementById("charNameTag");
+    const characterBox = document.getElementById("characterBox");
+
+    // 상태
+    let isSpinning = false;
+    let currentRotation = 0;
+    const sliceDeg = 360 / CATEGORY_DATA.length; // 45도
+
+    // 2. 슬롯 라벨 세팅
+    function setupLabels() {
+      CATEGORY_DATA.forEach((cat, index) => {
+        const label = document.createElement("div");
+        label.className = "slice-label";
+        // 원 중심에서 바깥 방향으로 나가게 회전 후, 다시 텍스트를 세워줌
+        const angle = sliceDeg * index + sliceDeg / 2; // 각 섹터 중앙
+        label.style.transform = `rotate(${angle}deg) translate(0, -50%)`;
+        label.innerHTML = `<span>${cat.label}</span>`;
+        wheelEl.appendChild(label);
+      });
+    }
+
+    setupLabels();
+
+    // 3. 랜덤 선택 함수
+    function pickRandomCategoryAndMenu() {
+      const category = CATEGORY_DATA[Math.floor(Math.random() * CATEGORY_DATA.length)];
+      const menu = category.menus[Math.floor(Math.random() * category.menus.length)];
+      return { category, menu };
+    }
+
+    // 4. 결과 UI 업데이트
+    function updateResultUI(category, menu) {
+      resultMain.textContent = `오늘 점심은 "${menu}" 어때?`;
+      resultSub.textContent = `${category.character.line} (${category.label} 카테고리 추천)`;
+      charNameTag.textContent = category.character.name || "???";
+
+      // 캐릭터 이미지가 있으면 img로, 없으면 기본 텍스트 유지
+      // 기존 노드 제거 후 다시 구성
+      const oldImg = characterBox.querySelector("img");
+      const placeholderText = characterBox.querySelector("span");
+
+      if (category.character.image) {
+        if (!oldImg) {
+          const img = document.createElement("img");
+          img.src = category.character.image;
+          img.alt = category.character.name || "캐릭터";
+          characterBox.insertBefore(img, placeholderText);
+        } else {
+          oldImg.src = category.character.image;
+          oldImg.alt = category.character.name || "캐릭터";
+        }
+        if (placeholderText) {
+          placeholderText.style.display = "none";
+        }
+      } else {
+        if (oldImg) oldImg.remove(
