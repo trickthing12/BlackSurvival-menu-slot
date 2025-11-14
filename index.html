@@ -100,6 +100,7 @@
       justify-content: center;
       align-items: center;
       transition: transform 3s cubic-bezier(0.21, 0.95, 0.45, 1);
+      transform: rotate(0deg);
     }
 
     .slice-label {
@@ -297,7 +298,7 @@
 
       <div class="title">
         <div class="title-main">LUNCH SLOT</div>
-        <div class="title-sub">오늘 점심은 서브컬처 캐릭터에게 맡겨보자</div>
+        <div class="title-sub">오늘 점심 메뉴는 실험체에게 맡겨보자</div>
       </div>
 
       <div class="slot-area">
@@ -320,8 +321,6 @@
 
       <div class="result-panel" id="resultPanel">
         <div class="result-character" id="characterBox">
-          <!-- 캐릭터 이미지는 있으면 img로, 없으면 배경 + 이름 -->
-          <!-- 기본 플레이스홀더 -->
           <span>캐릭터 프리뷰</span>
           <div class="char-name-tag" id="charNameTag">???</div>
         </div>
@@ -337,7 +336,7 @@
   </div>
 
   <script>
-    // 1. 데이터 정의
+    // 1. 데이터 정의 (네가 넣은 캐릭터/문구 그대로 사용)
     const CATEGORY_DATA = [
       {
         id: 0,
@@ -345,7 +344,7 @@
         label: "밥도둑",
         character: {
           name: "비앙카",
-          image: "이미지/비앙카.jpg", // 이미지 없으면 나중에 추가
+          image: "이미지/비앙카.jpg",
           line: "진조가 추천하는 메뉴인것이다!"
         },
         menus: [
@@ -463,7 +462,6 @@
     const charNameTag = document.getElementById("charNameTag");
     const characterBox = document.getElementById("characterBox");
 
-    // 상태
     let isSpinning = false;
     let currentRotation = 0;
     const sliceDeg = 360 / CATEGORY_DATA.length; // 45도
@@ -473,8 +471,7 @@
       CATEGORY_DATA.forEach((cat, index) => {
         const label = document.createElement("div");
         label.className = "slice-label";
-        // 원 중심에서 바깥 방향으로 나가게 회전 후, 다시 텍스트를 세워줌
-        const angle = sliceDeg * index + sliceDeg / 2; // 각 섹터 중앙
+        const angle = sliceDeg * index + sliceDeg / 2; // 섹터 중앙
         label.style.transform = `rotate(${angle}deg) translate(0, -50%)`;
         label.innerHTML = `<span>${cat.label}</span>`;
         wheelEl.appendChild(label);
@@ -483,21 +480,21 @@
 
     setupLabels();
 
-    // 3. 랜덤 선택 함수
+    // 3. 랜덤 선택
     function pickRandomCategoryAndMenu() {
-      const category = CATEGORY_DATA[Math.floor(Math.random() * CATEGORY_DATA.length)];
-      const menu = category.menus[Math.floor(Math.random() * category.menus.length)];
+      const category =
+        CATEGORY_DATA[Math.floor(Math.random() * CATEGORY_DATA.length)];
+      const menu =
+        category.menus[Math.floor(Math.random() * category.menus.length)];
       return { category, menu };
     }
 
-    // 4. 결과 UI 업데이트
+    // 4. 결과 UI
     function updateResultUI(category, menu) {
       resultMain.textContent = `오늘 점심은 "${menu}" 어때?`;
       resultSub.textContent = `${category.character.line} (${category.label} 카테고리 추천)`;
       charNameTag.textContent = category.character.name || "???";
 
-      // 캐릭터 이미지가 있으면 img로, 없으면 기본 텍스트 유지
-      // 기존 노드 제거 후 다시 구성
       const oldImg = characterBox.querySelector("img");
       const placeholderText = characterBox.querySelector("span");
 
@@ -515,4 +512,47 @@
           placeholderText.style.display = "none";
         }
       } else {
-        if (oldImg) oldImg.remove(
+        if (oldImg) oldImg.remove();
+        if (placeholderText) {
+          placeholderText.style.display = "block";
+          placeholderText.textContent = "캐릭터 프리뷰";
+        }
+      }
+
+      resultPanel.classList.add("visible");
+    }
+
+    // 5. 회전 로직 (transitionend 대신 setTimeout 사용)
+    function spin() {
+      if (isSpinning) return;
+      isSpinning = true;
+      spinButton.classList.add("disabled");
+      resultPanel.classList.remove("visible");
+
+      // 첫 실행 시 딤드 제거
+      dimLayer.classList.add("off");
+
+      const { category, menu } = pickRandomCategoryAndMenu();
+      const targetIndex = category.id;
+
+      const randomTurns = 5 + Math.floor(Math.random() * 3); // 5~7바퀴
+      const targetAngle = targetIndex * sliceDeg + sliceDeg / 2;
+      const finalRotation = randomTurns * 360 - targetAngle;
+
+      wheelEl.style.transition = "transform 3s cubic-bezier(0.21, 0.95, 0.45, 1)";
+      wheelEl.style.transform = `rotate(${finalRotation}deg)`;
+
+      setTimeout(() => {
+        currentRotation = finalRotation % 360;
+        updateResultUI(category, menu);
+        isSpinning = false;
+        spinButton.classList.remove("disabled");
+      }, 3100); // 회전 시간(3초)보다 약간 길게
+    }
+
+    // 6. 이벤트
+    spinButton.addEventListener("click", spin);
+    retryButton.addEventListener("click", spin);
+  </script>
+</body>
+</html>
