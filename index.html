@@ -25,6 +25,7 @@
       padding: 20px 16px;
       min-height: 430px;
       position: relative;
+      overflow: hidden;
     }
 
     .title { text-align: center; margin-bottom: 12px; }
@@ -34,14 +35,20 @@
     .view { width: 100%; height: calc(100% - 52px); position: relative; }
     .hidden { display: none; }
 
-    /* ---------- 슬롯 ---------- */
-    .wheel-wrapper { width: 320px; height: 320px; margin: 0 auto; position: relative; }
+    /* ---------- 슬롯 화면 ---------- */
+
+    .wheel-wrapper {
+      width: 320px;
+      height: 320px;
+      margin: 0 auto;
+      position: relative;
+    }
 
     .wheel-base {
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      background: radial-gradient(circle, #fff 25%, #f4f4f4 55%, #e8e8e8);
+      background: radial-gradient(circle, #ffffff 25%, #f4f4f4 55%, #e8e8e8);
       box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
     }
 
@@ -51,19 +58,23 @@
       border-radius: 50%;
       border: 4px solid rgba(0,0,0,0.18);
       transition: transform 3s cubic-bezier(0.21,0.95,0.45,1);
+      transform: rotate(0deg);
     }
 
     .slice-divider {
       position: absolute;
-      left: 50%; top: 50%;
-      width: 50%; height: 2px;
+      left: 50%;
+      top: 50%;
+      width: 50%;
+      height: 2px;
       background: rgba(0,0,0,0.18);
       transform-origin: 0 50%;
     }
 
     .slice-label {
       position: absolute;
-      left: 50%; top: 50%;
+      left: 50%;
+      top: 50%;
       transform-origin: 0 0;
       width: 50%;
       text-align: center;
@@ -71,23 +82,26 @@
       color: #333;
       font-weight: 600;
     }
+
     .slice-label span {
-      background: rgba(255,255,255,0.9);
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,0.08);
-      transform: translateY(-140%);
       display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.08);
+      /* 추가 transform 제거: 삼각형 중앙에 위치하도록 container 기준 */
     }
 
     .pointer {
       position: absolute;
-      top: 6px; left: 50%;
+      top: 6px;
+      left: 50%;
       transform: translateX(-50%);
       border-left: 12px solid transparent;
       border-right: 12px solid transparent;
       border-bottom: 18px solid #ffeb8a;
       z-index: 3;
+      filter: drop-shadow(0 0 6px rgba(0,0,0,0.8));
     }
 
     .spin-button {
@@ -101,36 +115,73 @@
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
-      margin-left: auto; margin-right: auto;
+      margin-left: auto;
+      margin-right: auto;
       box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+      white-space: nowrap;
     }
-    .spin-button.disabled { opacity: 0.5; pointer-events: none; }
+
+    .spin-button.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
 
     /* ---------- 결과 화면 ---------- */
-    .result-view { text-align: center; padding-top: 16px; }
-    .result-title { opacity: 0.7; font-size: 12px; }
-    .result-main { font-size: 20px; font-weight: 700; margin: 10px 0 16px; }
+
+    .result-view {
+      text-align: center;
+      padding-top: 16px;
+    }
+
+    .result-title {
+      opacity: 0.7;
+      font-size: 12px;
+    }
+
+    .result-main {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 10px 0 16px;
+      line-height: 1.4;
+    }
 
     .result-character-box {
-      width: 150px; height: 150px;
+      width: 150px;
+      height: 150px;
       background: linear-gradient(135deg, #ff7bc2, #7f7bff);
       border-radius: 24px;
       overflow: hidden;
       margin: 0 auto 12px;
       position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    .result-character-box img { width: 100%; height: 100%; object-fit: cover; }
+
+    .result-character-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     .result-char-name {
       position: absolute;
-      bottom: 6px; left: 50%;
+      bottom: 6px;
+      left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.7);
       padding: 3px 10px;
       border-radius: 999px;
       font-size: 12px;
+      white-space: nowrap;
     }
 
-    .result-line { font-size: 14px; margin-bottom: 12px; opacity: 0.9; }
+    .result-line {
+      font-size: 14px;
+      margin-bottom: 12px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
 
     .result-retry-button {
       border: none;
@@ -178,57 +229,93 @@
 
         <div class="result-line" id="resultLine"></div>
 
-        <button id="resultRetryButton" class="result-retry-button">메뉴 다시 추천</button>
+        <button id="resultRetryButton" class="result-retry-button">
+          메뉴 다시 추천
+        </button>
       </div>
 
     </div>
   </div>
 
   <script>
+    // 1. 데이터
     const CATEGORY_DATA = [
       {
         id: 0, label: "밥도둑",
-        character: { name: "비앙카", image: "이미지/비앙카.jpg", line: "진조가 추천하는 메뉴인것이다!" },
+        character: {
+          name: "비앙카",
+          image: "이미지/비앙카.jpg",
+          line: "진조가 추천하는 메뉴인것이다!"
+        },
         menus: ["찜닭","아구찜","오므라이스","제육","덮밥","카레라이스","생선정식","게장"]
       },
       {
         id: 1, label: "면류",
-        character: { name: "피오라", image: "이미지/피오라.jpg", line: "밥 먹는 것도 중요하지." },
+        character: {
+          name: "피오라",
+          image: "이미지/피오라.jpg",
+          line: "밥 먹는 것도 중요하지."
+        },
         menus: ["비빔국수","스파게티","잔치국수","뇨끼","칼국수","수제비","쌀국수","막국수"]
       },
       {
         id: 2, label: "일식",
-        character: { name: "리오", image: "이미지/리오.jpg", line: "오늘은 이 메뉴를 추천합니다." },
+        character: {
+          name: "리오",
+          image: "이미지/리오.jpg",
+          line: "오늘은 이 메뉴를 추천합니다."
+        },
         menus: ["초밥","가츠동","라멘","소바","돈부리","규동","오코노미야끼","연어덮밥"]
       },
       {
         id: 3, label: "국/찌개",
-        character: { name: "현우", image: "이미지/현우.jpg", line: "이럴 때 먹으라고 있는 게 이 메뉴지." },
+        character: {
+          name: "현우",
+          image: "이미지/현우.jpg",
+          line: "이럴 때 먹으라고 있는 게 이 메뉴지."
+        },
         menus: ["김치찌개","육개장","뼈해장국","부대찌개","된장찌개","돼지국밥","갈치조림","순두부찌개"]
       },
       {
         id: 4, label: "중식",
-        character: { name: "쇼우", image: "이미지/쇼우.jpg", line: "좋아! 내가 단숨에 요리해줄게." },
+        character: {
+          name: "쇼우",
+          image: "이미지/쇼우.jpg",
+          line: "좋아! 내가 단숨에 요리해줄게."
+        },
         menus: ["마라탕","짜장면","짬뽕","탕수육","깐풍새우","새우볶음밥","마파두부","꿔바로우"]
       },
       {
         id: 5, label: "귀찮음",
-        character: { name: "일레븐", image: "이미지/일레븐.jpg", line: "모두 안녕? 오늘은 이 메뉴를 추천할게." },
+        character: {
+          name: "일레븐",
+          image: "이미지/일레븐.jpg",
+          line: "모두 안녕? 오늘은 이 메뉴를 추천할게."
+        },
         menus: ["토스트","볶음밥","샌드위치","도시락","타코","컵라면","삼각김밥","햄버거"]
       },
       {
         id: 6, label: "헤비",
-        character: { name: "유키", image: "이미지/유키.jpg", line: "이 메뉴 추천은 어떠십니까?" },
+        character: {
+          name: "유키",
+          image: "이미지/유키.jpg",
+          line: "이 메뉴 추천은 어떠십니까?"
+        },
         menus: ["치킨","족발","보쌈","피자","곱창","삼겹살","스테이크","닭발"]
       },
       {
         id: 7, label: "분식",
-        character: { name: "레니", image: "이미지/레니.jpg", line: "띠용~ 띠용~" },
+        character: {
+          name: "레니",
+          image: "이미지/레니.jpg",
+          line: "띠용~ 띠용~"
+        },
         menus: ["떡볶이","어묵","순대","김밥","돈까스","라면","핫도그","튀김"]
       }
     ];
 
     const sliceDeg = 360 / CATEGORY_DATA.length;
+
     const wheelEl = document.getElementById("wheel");
     const spinButton = document.getElementById("spinButton");
     const slotView = document.getElementById("slotView");
@@ -238,39 +325,45 @@
     const resultLine = document.getElementById("resultLine");
     const resultCharName = document.getElementById("resultCharName");
     const resultCharacterBox = document.getElementById("resultCharacterBox");
+    const resultRetryButton = document.getElementById("resultRetryButton");
 
     let isSpinning = false;
 
-    /* ------------------------- 1. Wheel Setup ------------------------- */
-    CATEGORY_DATA.forEach((cat, i) => {
-      const centerAngle = i * sliceDeg + sliceDeg / 2;
+    // 2. 룰렛 구성 (구분선 + 섹터 중앙 라벨)
+    function setupWheel() {
+      CATEGORY_DATA.forEach((cat, i) => {
+        const baseAngle = i * sliceDeg;
+        const centerAngle = baseAngle + sliceDeg / 2; // 섹터 중앙 각도
 
-      // 구분선
-      const divider = document.createElement("div");
-      divider.className = "slice-divider";
-      divider.style.transform = `rotate(${i * sliceDeg}deg)`;
-      wheelEl.appendChild(divider);
+        // 구분선
+        const divider = document.createElement("div");
+        divider.className = "slice-divider";
+        divider.style.transform = `rotate(${baseAngle}deg)`;
+        wheelEl.appendChild(divider);
 
-      // 라벨 (영역 중심으로 이동)
-      const label = document.createElement("div");
-      label.className = "slice-label";
-      label.style.transform = `rotate(${centerAngle}deg) translate(55px, -50%)`;
-      label.innerHTML = `<span>${cat.label}</span>`;
-      wheelEl.appendChild(label);
-    });
+        // 라벨 - 섹터 내부 중앙에 위치하도록 반지름의 중간지점(≈70px)으로 이동
+        const label = document.createElement("div");
+        label.className = "slice-label";
+        label.style.transform = `rotate(${centerAngle}deg) translate(70px, -50%)`;
+        label.innerHTML = `<span>${cat.label}</span>`;
+        wheelEl.appendChild(label);
+      });
+    }
 
-    /* ------------------------- 2. 랜덤 선택 ------------------------- */
+    setupWheel();
+
+    // 3. 카테고리 + 메뉴 랜덤 선택
     function pickRandom() {
-      const category = CATEGORY_DATA[Math.floor(Math.random() * 8)];
-      const menu = category.menus[Math.floor(Math.random() * 8)];
+      const category = CATEGORY_DATA[Math.floor(Math.random() * CATEGORY_DATA.length)];
+      const menu = category.menus[Math.floor(Math.random() * category.menus.length)];
       return { category, menu };
     }
 
-    /* ------------------------- 3. 결과 화면 ------------------------- */
+    // 4. 결과 화면 표시
     function showResult(category, menu) {
       resultMain.textContent = `오늘 점심은 "${menu}" 어때?`;
       resultLine.textContent = category.character.line;
-      resultCharName.textContent = category.character.name;
+      resultCharName.textContent = category.character.name || "???";
 
       const oldImg = resultCharacterBox.querySelector("img");
       const placeholder = resultCharacterBox.querySelector("span");
@@ -279,34 +372,41 @@
         if (!oldImg) {
           const img = document.createElement("img");
           img.src = category.character.image;
+          img.alt = category.character.name || "캐릭터";
           resultCharacterBox.insertBefore(img, placeholder);
-        } else oldImg.src = category.character.image;
-
-        placeholder.style.display = "none";
+        } else {
+          oldImg.src = category.character.image;
+          oldImg.alt = category.character.name || "캐릭터";
+        }
+        if (placeholder) placeholder.style.display = "none";
       } else {
         if (oldImg) oldImg.remove();
-        placeholder.style.display = "block";
+        if (placeholder) {
+          placeholder.style.display = "block";
+          placeholder.textContent = "캐릭터";
+        }
       }
 
       slotView.classList.add("hidden");
       resultView.classList.remove("hidden");
     }
 
-    /* ------------------------- 4. 회전 ------------------------- */
+    // 5. 회전 + 화면 전환
     function spin() {
       if (isSpinning) return;
       isSpinning = true;
       spinButton.classList.add("disabled");
 
-      const { category, menu } = pickRandom();
-
-      const randomTurns = 5 + Math.floor(Math.random() * 3);
-      const angle = category.id * sliceDeg + sliceDeg / 2;
-      const finalRotation = randomTurns * 360 - angle;
-
-      // 슬롯 화면 고정
+      // 항상 슬롯 화면에서 시작
       resultView.classList.add("hidden");
       slotView.classList.remove("hidden");
+
+      const { category, menu } = pickRandom();
+      const targetIndex = category.id;
+
+      const randomTurns = 5 + Math.floor(Math.random() * 3); // 5~7바퀴
+      const targetAngle = targetIndex * sliceDeg + sliceDeg / 2;
+      const finalRotation = randomTurns * 360 - targetAngle;
 
       wheelEl.style.transition = "transform 3s cubic-bezier(0.21,0.95,0.45,1)";
       wheelEl.style.transform = `rotate(${finalRotation}deg)`;
@@ -318,10 +418,9 @@
       }, 3100);
     }
 
-    /* ------------------------- 5. 버튼 이벤트 ------------------------- */
+    // 6. 이벤트 바인딩
     spinButton.addEventListener("click", spin);
-    document.getElementById("resultRetryButton")
-            .addEventListener("click", spin);
+    resultRetryButton.addEventListener("click", spin);
   </script>
 </body>
 </html>
