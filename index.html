@@ -336,7 +336,7 @@
   </div>
 
   <script>
-    // 1. 데이터 정의 (네가 넣은 캐릭터/문구 그대로 사용)
+    // 1. 데이터 정의 (캐릭터/문구 반영)
     const CATEGORY_DATA = [
       {
         id: 0,
@@ -463,7 +463,6 @@
     const characterBox = document.getElementById("characterBox");
 
     let isSpinning = false;
-    let currentRotation = 0;
     const sliceDeg = 360 / CATEGORY_DATA.length; // 45도
 
     // 2. 슬롯 라벨 세팅
@@ -522,14 +521,13 @@
       resultPanel.classList.add("visible");
     }
 
-    // 5. 회전 로직 (transitionend 대신 setTimeout 사용)
+    // 5. 회전 로직
     function spin() {
       if (isSpinning) return;
       isSpinning = true;
       spinButton.classList.add("disabled");
       resultPanel.classList.remove("visible");
 
-      // 첫 실행 시 딤드 제거
       dimLayer.classList.add("off");
 
       const { category, menu } = pickRandomCategoryAndMenu();
@@ -543,11 +541,10 @@
       wheelEl.style.transform = `rotate(${finalRotation}deg)`;
 
       setTimeout(() => {
-        currentRotation = finalRotation % 360;
         updateResultUI(category, menu);
         isSpinning = false;
         spinButton.classList.remove("disabled");
-      }, 3100); // 회전 시간(3초)보다 약간 길게
+      }, 3100);
     }
 
     // 6. 이벤트
