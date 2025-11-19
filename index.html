@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>점심 추천 슬롯</title>
+  <title>점심/저녁 추천 슬롯</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -34,6 +34,50 @@
 
     .view { width: 100%; height: calc(100% - 52px); position: relative; }
     .hidden { display: none; }
+
+    /* ---------- 모드 선택 화면 ---------- */
+
+    .mode-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .mode-desc {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .mode-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .mode-button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+      white-space: nowrap;
+    }
+
+    .mode-button.lunch {
+      background: linear-gradient(135deg, #ffb347, #ff7b47);
+      color: #141414;
+    }
+
+    .mode-button.dinner {
+      background: linear-gradient(135deg, #6a8bff, #9a6aff);
+      color: #f5f5ff;
+    }
 
     /* ---------- 슬롯 화면 ---------- */
 
@@ -201,24 +245,35 @@
     <div class="card">
 
       <div class="title">
-        <div class="title-main">LUNCH SLOT</div>
-        <div class="title-sub">오늘 점심 메뉴는 실험체에게 맡겨보자</div>
+        <div class="title-main">MEAL SLOT</div>
+        <div class="title-sub" id="titleSub">오늘 메뉴는 캐릭터에게 맡겨보자</div>
       </div>
 
-      <!-- 슬롯 화면 -->
-      <div id="slotView" class="view">
+      <!-- 1. 점심/저녁 선택 화면 -->
+      <div id="modeView" class="view mode-view">
+        <div class="mode-desc">
+          어떤 룰렛을 돌릴까요?
+        </div>
+        <div class="mode-buttons">
+          <button id="lunchModeButton" class="mode-button lunch">점심 룰렛</button>
+          <button id="dinnerModeButton" class="mode-button dinner">저녁 룰렛</button>
+        </div>
+      </div>
+
+      <!-- 2. 슬롯 화면 -->
+      <div id="slotView" class="view hidden">
         <div class="wheel-wrapper">
           <div class="wheel-base"></div>
           <div id="wheel" class="wheel"></div>
           <div class="pointer"></div>
         </div>
 
-        <button id="spinButton" class="spin-button">점심 추천</button>
+        <button id="spinButton" class="spin-button">메뉴 추천</button>
       </div>
 
-      <!-- 결과 화면 -->
+      <!-- 3. 결과 화면 -->
       <div id="resultView" class="view hidden">
-        <div class="result-title">오늘의 점심 결과</div>
+        <div class="result-title">오늘의 추천 결과</div>
         <div class="result-main" id="resultMain"></div>
 
         <div class="result-character-box" id="resultCharacterBox">
@@ -237,8 +292,9 @@
   </div>
 
   <script>
-    // 1. 데이터
-    const CATEGORY_DATA = [
+    // ---------- 1. 기존 데이터 기반: 점심/저녁 분리 ----------
+
+    const LUNCH_CATEGORY_DATA = [
       {
         id: 0, label: "밥도둑",
         character: {
@@ -246,7 +302,7 @@
           image: "이미지/비앙카.jpg",
           line: "진조가 추천하는 메뉴인것이다!"
         },
-        menus: ["찜닭","아구찜","오므라이스","제육","덮밥","카레라이스","생선정식","게장"]
+        menus: ["제육덮밥","닭갈비덮밥","오징어볶음정식","고등어구이정식","치킨마요덮밥","참치마요덮밥","소불고기덮밥","김치볶음밥"]
       },
       {
         id: 1, label: "면류",
@@ -255,7 +311,7 @@
           image: "이미지/피오라.jpg",
           line: "밥 먹는 것도 중요하지."
         },
-        menus: ["비빔국수","스파게티","잔치국수","뇨끼","칼국수","수제비","쌀국수","막국수"]
+        menus: ["비빔국수","들기름막국수","콩국수","우동","까르보나라","토마토파스타","냉모밀","잔치국수"]
       },
       {
         id: 2, label: "일식",
@@ -264,7 +320,7 @@
           image: "이미지/리오.jpg",
           line: "오늘은 이 메뉴를 추천합니다."
         },
-        menus: ["초밥","가츠동","라멘","소바","돈부리","규동","오코노미야끼","연어덮밥"]
+        menus: ["연어덮밥","가츠동","규카츠정식","사케동","치킨가라아게정식","야끼소바","새우튀김덮밥","오야코동"]
       },
       {
         id: 3, label: "국/찌개",
@@ -282,16 +338,16 @@
           image: "이미지/쇼우.jpg",
           line: "좋아! 내가 단숨에 요리해줄게."
         },
-        menus: ["마라탕","짜장면","짬뽕","탕수육","깐풍새우","새우볶음밥","마파두부","꿔바로우"]
+        menus: ["마라탕","짜장면","짬뽕","쟁반짜장","유산슬덮밥","마파두부덮밥","차돌짬뽕","볶음짬뽕"]
       },
       {
-        id: 5, label: "귀찮음",
+        id: 5, label: "간편식",
         character: {
           name: "일레븐",
           image: "이미지/일레븐.jpg",
           line: "모두 안녕? 오늘은 이 메뉴를 추천할게."
         },
-        menus: ["토스트","볶음밥","샌드위치","도시락","타코","컵라면","삼각김밥","햄버거"]
+        menus: ["편의점도시락","컵라면","주먹밥","샌드위치","시리얼","토스트","삼각김밥","샐러드"]
       },
       {
         id: 6, label: "헤비",
@@ -300,7 +356,7 @@
           image: "이미지/유키.jpg",
           line: "이 메뉴 추천은 어떠십니까?"
         },
-        menus: ["치킨","족발","보쌈","피자","곱창","삼겹살","스테이크","닭발"]
+        menus: ["돈가스정식","피자","치즈돈가스","생선가스","치킨텐더정식","함박스테이크","치즈오므라이스","햄버거세트"]
       },
       {
         id: 7, label: "분식",
@@ -309,20 +365,124 @@
           image: "이미지/레니.jpg",
           line: "띠용~ 띠용~"
         },
-        menus: ["떡볶이","어묵","순대","김밥","돈까스","라면","핫도그","튀김"]
+        menus: ["떡볶이","라볶이","순대세트","김밥","어묵세트","라면","쫄면","튀김세트"]
       }
     ];
 
-    const sliceDeg = 360 / CATEGORY_DATA.length;
+    // 저녁용 데이터: 일단 점심과 동일하게 복사.
+    // 나중에 이미지/메뉴/대사를 변경하고 싶으면 여기 DINNER_CATEGORY_DATA만 수정하면 된다.
+    const DINNER_CATEGORY_DATA = [
+  {
+    id: 0, label: "밥도둑",
+    character: {
+      name: "루크",
+      image: "이미지/루크.jpg",
+      line: "무엇을 추천해드릴까요?"
+    },
+    menus: [
+      "간장게장","양념게장","코다리조림","갈치조림",
+      "장어구이","낙지볶음","소갈비찜","제육보쌈"
+    ]
+  },
+  {
+    id: 1, label: "면류",
+    character: {
+      name: "바바라",
+      image: "이미지/바바라.jpg",
+      line: "세기의 발명가님이 추천하는 메뉴다."
+    },
+    menus: [
+      "막창볶음우동","해물칼국수","알리오올리오","매운해물파스타",
+      "비빔막국수","중화비빔면","라면전골","사리곰탕라면"
+    ]
+  },
+  {
+    id: 2, label: "일식",
+    character: {
+      name: "아야",
+      image: "이미지/아야.jpg",
+      line: "저녁 메뉴요? 이걸로 드셔보세요!"
+    },
+    menus: [
+      "모둠초밥","사시미세트","규동","텐동",
+      "돈카츠나베","나베우동","타코야키","오코노미야키"
+    ]
+  },
+  {
+    id: 3, label: "국/찌개",
+    character: {
+      name: "매그너스",
+      image: "이미지/매그너스.jpg",
+      line: "뜨끈하게 속을 달래볼까."
+    },
+    menus: [
+      "김치찌개","부대찌개","감자탕","뼈해장국",
+      "해물탕","알탕","곱창전골","동태찌개"
+    ]
+  },
+  {
+    id: 4, label: "중식",
+    character: {
+      name: "리다이린",
+      image: "이미지/리다이린.jpg",
+      line: "나도 같이 먹을래~"
+    },
+    menus: [
+      "마라탕","마라샹궈","깐풍기","탕수육",
+      "팔보채","고추잡채","깐쇼새우","짬뽕탕"
+    ]
+  },
+  {
+    id: 5, label: "귀찮음",
+    character: {
+      name: "아이솔",
+      image: "이미지/아이솔.jpg",
+      line: "저녁은..이거면 될 거 같군요."
+    },
+    menus: [
+      "치킨너겟에맥주","냉동피자","전자레인지볶음밥","소시지야채볶음",
+      "참치마요주먹밥","야식토스트","콘치즈","치즈나쵸"
+    ]
+  },
+  {
+    id: 6, label: "헤비",
+    character: {
+      name: "레녹스",
+      image: "이미지/레녹스.jpg",
+      line: "자, 오늘은 어떤 메뉴가 날 기다릴까?"
+    },
+    menus: [
+      "후라이드치킨","양념치킨","족발","보쌈",
+      "소곱창구이","삼겹살구이","등갈비구이","치즈불닭"
+    ]
+  },
+  {
+    id: 7, label: "분식",
+    character: {
+      name: "엠마",
+      image: "이미지/엠마.jpg",
+      line: "저녁의 마술사 등장! 어떤 메뉴를 추천해줄까?"
+    },
+    menus: [
+      "야식떡볶이","모둠튀김","순대곱창볶음","치즈라면",
+      "분식돈까스","핫도그","길거리토스트","라면에김밥"
+    ]
+  }
+];
 
-    // CSS transform 기준에서:
-    // 0deg = 오른쪽(3시), 90deg = 아래(6시), 180deg = 왼쪽(9시), 270deg = 위(12시)
-    const pointerAngle = 270; // 실제 포인터가 있는 12시 방향
+    // ---------- 2. 공통 요소 ----------
+
+    const pointerAngle = 270; // 12시 방향
 
     const wheelEl = document.getElementById("wheel");
     const spinButton = document.getElementById("spinButton");
     const slotView = document.getElementById("slotView");
     const resultView = document.getElementById("resultView");
+    const modeView = document.getElementById("modeView");
+    const titleSubEl = document.getElementById("titleSub");
+
+    const lunchModeButton = document.getElementById("lunchModeButton");
+    const dinnerModeButton = document.getElementById("dinnerModeButton");
 
     const resultMain = document.getElementById("resultMain");
     const resultLine = document.getElementById("resultLine");
@@ -331,12 +491,20 @@
     const resultRetryButton = document.getElementById("resultRetryButton");
 
     let isSpinning = false;
+    let currentMode = null;      // 'lunch' | 'dinner'
+    let currentData = LUNCH_CATEGORY_DATA;
+    let currentSliceDeg = 360 / currentData.length;
 
-    // 2. 룰렛 구성 (구분선 + 섹터 중앙 라벨)
-    function setupWheel() {
-      CATEGORY_DATA.forEach((cat, i) => {
-        const baseAngle = i * sliceDeg;
-        const centerAngle = baseAngle + sliceDeg / 2; // 섹터 중앙 각도 (3시 기준)
+    // ---------- 3. 휠 구성 ----------
+
+    function buildWheel() {
+      // 기존 divider/label 모두 제거
+      wheelEl.innerHTML = "";
+      currentSliceDeg = 360 / currentData.length;
+
+      currentData.forEach((cat, i) => {
+        const baseAngle = i * currentSliceDeg;
+        const centerAngle = baseAngle + currentSliceDeg / 2; // 섹터 중앙 각도(3시 기준)
 
         // 구분선
         const divider = document.createElement("div");
@@ -344,21 +512,20 @@
         divider.style.transform = `rotate(${baseAngle}deg)`;
         wheelEl.appendChild(divider);
 
-        // 라벨 – 원 중심과 테두리 중간 정도(반지름 약 60~65% 위치)
+        // 라벨: 원 중심과 테두리 중간쯤 (필요 시 숫자 조절)
         const label = document.createElement("div");
         label.className = "slice-label";
-        // translate(거리, -50%): 거리 값이 클수록 테두리 쪽, 작을수록 원 중심 쪽
         label.style.transform = `rotate(${centerAngle}deg) translate(35px, -50%)`;
         label.innerHTML = `<span>${cat.label}</span>`;
         wheelEl.appendChild(label);
       });
     }
 
-    setupWheel();
+    // ---------- 4. 결과 화면 ----------
 
-    // 3. 결과 화면 표시
     function showResult(category, menu) {
-      resultMain.textContent = `오늘 점심은 "${menu}" 어때?`;
+      const mealText = currentMode === "dinner" ? "저녁" : "점심";
+      resultMain.textContent = `오늘 ${mealText}은 "${menu}" 어때?`;
       resultLine.textContent = category.character.line;
       resultCharName.textContent = category.character.name || "???";
 
@@ -388,23 +555,24 @@
       resultView.classList.remove("hidden");
     }
 
-    // 4. 회전 + 결과 연동
+    // ---------- 5. 회전 + 결과 연동 ----------
+
     function spin() {
-      if (isSpinning) return;
+      if (isSpinning || !currentMode) return;
       isSpinning = true;
       spinButton.classList.add("disabled");
 
-      // 항상 슬롯 화면에서 시작
+      // 슬롯 화면에서 시작
       resultView.classList.add("hidden");
       slotView.classList.remove("hidden");
 
       // 1) 어떤 카테고리에 멈출지 먼저 결정
-      const chosenIndex = Math.floor(Math.random() * CATEGORY_DATA.length);
-      const category = CATEGORY_DATA[chosenIndex];
+      const chosenIndex = Math.floor(Math.random() * currentData.length);
+      const category = currentData[chosenIndex];
       const menu = category.menus[Math.floor(Math.random() * category.menus.length)];
 
       // 2) 그 카테고리 섹터 중앙이 포인터(12시)에 오도록 회전 각도 계산
-      const sectorCenterAngle = sliceDeg * chosenIndex + sliceDeg / 2; // 3시 기준
+      const sectorCenterAngle = currentSliceDeg * chosenIndex + currentSliceDeg / 2;
       const randomTurns = 5 + Math.floor(Math.random() * 3); // 5~7바퀴
       const finalRotation = randomTurns * 360 + (pointerAngle - sectorCenterAngle);
 
@@ -423,9 +591,34 @@
       }, 3100);
     }
 
-    // 5. 이벤트
+    // ---------- 6. 모드 선택 ----------
+
+    function selectMode(mode) {
+      currentMode = mode;
+      currentData = mode === "lunch" ? LUNCH_CATEGORY_DATA : DINNER_CATEGORY_DATA;
+      buildWheel();
+
+      modeView.classList.add("hidden");
+      slotView.classList.remove("hidden");
+      resultView.classList.add("hidden");
+
+      if (mode === "lunch") {
+        spinButton.textContent = "점심 추천";
+        titleSubEl.textContent = "오늘 점심 메뉴는 실험체에게 맡겨보자";
+      } else {
+        spinButton.textContent = "저녁 추천";
+        titleSubEl.textContent = "오늘 저녁 메뉴는 실험체에게 맡겨보자";
+      }
+    }
+
+    // ---------- 7. 이벤트 ----------
+
+    lunchModeButton.addEventListener("click", () => selectMode("lunch"));
+    dinnerModeButton.addEventListener("click", () => selectMode("dinner"));
+
     spinButton.addEventListener("click", spin);
     resultRetryButton.addEventListener("click", spin);
   </script>
 </body>
 </html>
+
