@@ -525,7 +525,7 @@
 
     function showResult(category, menu) {
       const mealText = currentMode === "dinner" ? "저녁" : "점심";
-      resultMain.textContent = `오늘 ${mealText}은 "${menu}" 어때?`;
+      resultMain.textContent = `오늘 ${mealText}은 "${menu}"`;
       resultLine.textContent = category.character.line;
       resultCharName.textContent = category.character.name || "???";
 
